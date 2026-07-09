@@ -18,7 +18,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useStore } from "@/lib/store";
-import { categoryTint, cn } from "@/lib/utils";
 import type { MenuCategory } from "@/lib/types";
 
 export default function CategoriesPage() {
@@ -93,9 +92,8 @@ export default function CategoriesPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {categories.map((cat, index) => {
+        {categories.map((cat) => {
           const count = itemCount(cat.id);
-          const tint = categoryTint(index);
           return (
             <Card
               key={cat.id}
@@ -103,15 +101,7 @@ export default function CategoriesPage() {
             >
               <CardContent className="p-5">
                 <div className="flex items-start justify-between">
-                  <div
-                    className={cn(
-                      "flex h-10 w-10 items-center justify-center rounded-xl transition-transform group-hover:scale-105",
-                      tint.bg,
-                      tint.text
-                    )}
-                  >
-                    <FolderOpen className="h-4.5 w-4.5" />
-                  </div>
+                  <FolderOpen className="mt-1 h-4 w-4 text-muted-foreground" />
                   <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                     <Button
                       size="iconSm"

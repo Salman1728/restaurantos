@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Phone, Save, Store, Wallet } from "lucide-react";
+import { Save } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,12 +52,7 @@ function SettingsForm() {
       <form onSubmit={save} className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2.5">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-                <Store className="h-4 w-4" />
-              </span>
-              Profile
-            </CardTitle>
+            <CardTitle>Profile</CardTitle>
             <CardDescription>
               Name, slug and description shown on your public menu.
             </CardDescription>
@@ -106,12 +101,7 @@ function SettingsForm() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2.5">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-100 text-sky-700">
-                <Phone className="h-4 w-4" />
-              </span>
-              Contact & location
-            </CardTitle>
+            <CardTitle>Contact & location</CardTitle>
             <CardDescription>
               Shown on the public site and used for customer orders.
             </CardDescription>
@@ -155,12 +145,7 @@ function SettingsForm() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2.5">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
-                <Wallet className="h-4 w-4" />
-              </span>
-              Menu display
-            </CardTitle>
+            <CardTitle>Menu display</CardTitle>
             <CardDescription>
               Currency, hours and publishing status.
             </CardDescription>

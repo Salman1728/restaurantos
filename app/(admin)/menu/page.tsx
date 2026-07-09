@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useStore } from "@/lib/store";
-import { categoryTint, cn, formatPrice } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import type { MenuItem } from "@/lib/types";
 
 interface ItemFormState {
@@ -187,13 +187,9 @@ export default function MenuItemsPage() {
       ) : (
         <div className="space-y-6">
           {grouped.map(({ category, items: catItems }) => {
-            const tint = categoryTint(
-              categories.findIndex((c) => c.id === category.id)
-            );
             return (
             <section key={category.id}>
               <h2 className="mb-2 flex items-center gap-2 px-1 text-sm font-semibold text-foreground">
-                <span className={cn("h-2 w-2 rounded-full", tint.bg, "ring-1 ring-inset ring-black/10")} />
                 {category.name}
                 <span className="font-normal text-muted-foreground">
                   · {catItems.length} item{catItems.length === 1 ? "" : "s"}
@@ -232,17 +228,6 @@ export default function MenuItemsPage() {
                           )}
                         />
                       </button>
-
-                      <div
-                        className={cn(
-                          "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-semibold",
-                          tint.bg,
-                          tint.text,
-                          !item.isAvailable && "opacity-50 saturate-50"
-                        )}
-                      >
-                        {item.name.slice(0, 2)}
-                      </div>
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">

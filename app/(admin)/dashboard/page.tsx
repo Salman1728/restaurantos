@@ -11,7 +11,6 @@ import {
   ArrowDownRight,
   Copy,
   Plus,
-  Sparkles,
 } from "lucide-react";
 import {
   Card,
@@ -24,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sparkline, WeeklyBars } from "@/components/charts";
 import { useStore } from "@/lib/store";
-import { categoryTint, cn, formatPrice } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 
 // Mock analytics until Supabase lands — static so SSR/CSR stay in sync.
 const VIEW_TRENDS: Record<string, number[]> = {
@@ -151,9 +150,7 @@ export default function DashboardPage() {
               <CardContent className="p-5">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">{label}</span>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-accent-foreground transition-transform group-hover:scale-110">
-                    <Icon className="h-4 w-4" />
-                  </div>
+                  <Icon className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div className="mt-3 flex items-end justify-between gap-2">
                   <div>
@@ -272,9 +269,7 @@ export default function DashboardPage() {
       <Card className="mt-6">
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <div>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-amber-500" /> Featured items
-            </CardTitle>
+            <CardTitle>Featured items</CardTitle>
             <CardDescription>Highlighted on your public menu</CardDescription>
           </div>
           <Button variant="ghost" size="sm" asChild>
@@ -291,30 +286,18 @@ export default function DashboardPage() {
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {featured.map((item) => {
-                const catIndex = categories.findIndex(
-                  (c) => c.id === item.categoryId
-                );
-                const tint = categoryTint(catIndex);
+                const cat = categories.find((c) => c.id === item.categoryId);
                 return (
                   <div
                     key={item.id}
                     className="flex items-center gap-3 rounded-xl border border-border p-3.5 transition-colors hover:bg-muted/40"
                   >
-                    <div
-                      className={cn(
-                        "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-sm font-semibold",
-                        tint.bg,
-                        tint.text
-                      )}
-                    >
-                      {item.name.slice(0, 2)}
-                    </div>
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium">
                         {item.name}
                       </div>
                       <div className="truncate text-xs text-muted-foreground">
-                        {categories[catIndex]?.name}
+                        {cat?.name}
                       </div>
                     </div>
                     <div className="shrink-0 text-sm font-semibold">
