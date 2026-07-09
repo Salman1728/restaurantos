@@ -74,6 +74,13 @@ export async function GET(
             currency: restaurant.currency,
             available: i.isAvailable,
             featured: i.isFeatured,
+            // Optional presentation fields — null when the restaurant
+            // doesn't use them (photo menus, grouped sections, sizes).
+            imageUrl: i.imageUrl ?? null,
+            badge: i.badge ?? null,
+            dietary: i.dietary ?? null,
+            group: i.group ?? null,
+            priceLarge: i.priceLarge ?? null,
           })),
       })),
     },

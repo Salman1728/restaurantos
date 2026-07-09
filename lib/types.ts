@@ -36,4 +36,12 @@ export interface MenuItem {
   isAvailable: boolean;
   isFeatured: boolean;
   sortOrder: number;
+  // Optional presentation fields — client sites that use them (photo
+  // menus, grouped sections, size variants) get them via the public API;
+  // sites that don't simply ignore them.
+  imageUrl?: string;
+  badge?: string;
+  dietary?: string[];
+  group?: string;
+  priceLarge?: number;
 }

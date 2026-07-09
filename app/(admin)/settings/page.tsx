@@ -18,6 +18,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { useStore } from "@/lib/store";
 
 export default function SettingsPage() {
+  const { restaurant } = useStore();
+  // Key by restaurant so the form re-seeds when the active restaurant changes.
+  return <SettingsForm key={restaurant.id} />;
+}
+
+function SettingsForm() {
   const { restaurant, updateRestaurant, notify } = useStore();
   const [form, setForm] = useState({ ...restaurant });
 

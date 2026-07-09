@@ -422,13 +422,278 @@ const saffronItems: MenuItem[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// QuickTap Restaurant — demo deployment of the QuickTap QR-menu template
+// (quicktap-menu.vercel.app). Photo menu: items carry imageUrl/badge/dietary.
+// ---------------------------------------------------------------------------
 
-export const mockRestaurants: Restaurant[] = [hanamRestaurant, saffronRestaurant];
+const quicktapRestaurant: Restaurant = {
+  id: "rest_quicktap",
+  slug: "quicktap",
+  name: "QuickTap Restaurant",
+  tagline: "Modern Kenyan comfort food & specialty coffee",
+  description:
+    "Demo restaurant for the QuickTap digital menu — modern Kenyan comfort food and specialty coffee on Riverside Drive.",
+  phone: "+254 700 000 000",
+  whatsapp: "+254 700 000 000",
+  email: "hello@quicktap.design",
+  address: "Riverside Drive, Nairobi",
+  currency: "KES",
+  openingHours: "Mon – Sun · 7:30 AM – 10:00 PM",
+  isPublished: true,
+  createdAt: "2026-06-20T09:00:00Z",
+};
+
+interface QuickTapSeedItem {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  category: string;
+  image?: string;
+  badge?: string;
+  dietary?: string[];
+}
+
+const quicktapSeed: { categories: { id: string; label: string }[]; items: QuickTapSeedItem[] } = {
+  categories: [
+    { id: "drinks", label: "Drinks" },
+    { id: "coffee", label: "Coffee" },
+    { id: "tea", label: "Tea" },
+    { id: "food", label: "Food" },
+    { id: "desserts", label: "Desserts" },
+    { id: "extras", label: "Extras" },
+  ],
+  items: [
+    { id: "fresh-passion-juice", name: "Fresh Passion Juice", description: "Cold-pressed passion fruit, served over ice", price: 350, category: "drinks", image: "https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=800&q=80", badge: "popular" },
+    { id: "mango-smoothie", name: "Mango Smoothie", description: "Ripe mango blended with yoghurt and a hint of lime", price: 450, category: "drinks", image: "https://images.unsplash.com/photo-1505252585461-04db1eb84625?w=800&q=80" },
+    { id: "berry-mocktail", name: "Berry Hibiscus Cooler", description: "Sparkling hibiscus, mixed berries & fresh mint", price: 500, category: "drinks", image: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=800&q=80", badge: "new" },
+    { id: "vanilla-milkshake", name: "Vanilla Bean Milkshake", description: "Thick and creamy, topped with whipped cream", price: 550, category: "drinks", image: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=800&q=80" },
+    { id: "espresso", name: "Espresso", description: "Double shot of single-origin Kenyan AA", price: 250, category: "coffee", image: "https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=800&q=80" },
+    { id: "cappuccino", name: "Cappuccino", description: "Velvety steamed milk over a rich double shot", price: 350, category: "coffee", image: "https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=800&q=80", badge: "popular" },
+    { id: "caramel-latte", name: "Caramel Latte", description: "House caramel, espresso & silky milk foam", price: 420, category: "coffee", image: "https://images.unsplash.com/photo-1541167760496-1628856ab772?w=800&q=80" },
+    { id: "iced-americano", name: "Iced Americano", description: "Bold espresso over ice — simple and refreshing", price: 320, category: "coffee", image: "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=800&q=80" },
+    { id: "kenyan-chai", name: "Kenyan Chai", description: "Slow-brewed with fresh milk, ginger & cardamom", price: 250, category: "tea", image: "https://images.unsplash.com/photo-1571934811356-5cc061b6821f?w=800&q=80", badge: "popular" },
+    { id: "matcha-latte", name: "Matcha Latte", description: "Ceremonial-grade matcha with steamed oat milk", price: 480, category: "tea", image: "https://images.unsplash.com/photo-1515823064-d6e0c04616a7?w=800&q=80", badge: "new", dietary: ["vegan"] },
+    { id: "iced-lemon-tea", name: "Iced Lemon Tea", description: "Cold-brewed black tea, honey & fresh lemon", price: 300, category: "tea", image: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800&q=80" },
+    { id: "hibiscus-tea", name: "Hibiscus Infusion", description: "Caffeine-free, lightly sweetened, served hot or iced", price: 280, category: "tea", image: "https://images.unsplash.com/photo-1597318181409-cf64d0b5d8a2?w=800&q=80" },
+    { id: "signature-smash-burger", name: "Signature Smash Burger", description: "Double beef patty, cheddar, caramelised onions & house sauce", price: 950, category: "food", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&q=80", badge: "popular" },
+    { id: "swahili-chicken", name: "Swahili Grilled Chicken", description: "Half chicken in coconut-lime marinade, served with kachumbari", price: 1100, category: "food", image: "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=800&q=80", badge: "chef", dietary: ["gluten-free", "spicy"] },
+    { id: "avocado-toast", name: "Avocado Sourdough Toast", description: "Smashed avo, poached eggs, chilli oil & dukkah", price: 750, category: "food", image: "https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=800&q=80", dietary: ["vegetarian", "spicy", "contains-nuts"] },
+    { id: "steak-frites", name: "Steak & Frites", description: "250g sirloin, garlic butter & hand-cut fries", price: 1450, category: "food", image: "https://images.unsplash.com/photo-1600891964092-4316c288032e?w=800&q=80" },
+    { id: "veggie-bowl", name: "Harvest Veggie Bowl", description: "Roast sweet potato, quinoa, greens & tahini dressing", price: 800, category: "food", image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80", badge: "new", dietary: ["vegan", "gluten-free"] },
+    { id: "margherita-pizza", name: "Wood-Fired Margherita", description: "San Marzano tomato, fior di latte & fresh basil", price: 1050, category: "food", image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&q=80", dietary: ["vegetarian"] },
+    { id: "chocolate-cake", name: "Dark Chocolate Fudge Cake", description: "Warm, gooey centre with vanilla ice cream", price: 550, category: "desserts", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&q=80", badge: "popular" },
+    { id: "cheesecake", name: "Passion Fruit Cheesecake", description: "Baked New York style with a passion fruit glaze", price: 500, category: "desserts", image: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=800&q=80" },
+    { id: "pancakes", name: "Fluffy Buttermilk Pancakes", description: "Stacked high with berries & maple syrup", price: 650, category: "desserts", image: "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800&q=80" },
+    { id: "ice-cream", name: "Artisan Ice Cream", description: "Two scoops — ask your server for today's flavours", price: 350, category: "desserts", image: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=800&q=80" },
+    { id: "hand-cut-fries", name: "Hand-Cut Fries", description: "With rosemary salt & garlic aioli", price: 350, category: "extras", image: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=800&q=80", badge: "popular" },
+    { id: "samosas", name: "Beef Samosas (3 pcs)", description: "Crispy pastry with spiced minced beef & tamarind dip", price: 300, category: "extras", image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800&q=80" },
+    { id: "garden-salad", name: "Side Garden Salad", description: "Mixed leaves, cherry tomatoes & citrus vinaigrette", price: 400, category: "extras", image: "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&q=80", dietary: ["vegan", "gluten-free"] },
+    { id: "butter-croissant", name: "Butter Croissant", description: "Baked fresh every morning", price: 250, category: "extras", image: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=800&q=80" },
+  ],
+};
+
+const quicktapCategories: MenuCategory[] = quicktapSeed.categories.map(
+  (cat, index) => ({
+    id: `qt-${cat.id}`,
+    restaurantId: quicktapRestaurant.id,
+    name: cat.label,
+    description: "",
+    sortOrder: index + 1,
+  })
+);
+
+const quicktapItems: MenuItem[] = quicktapSeed.items.map((item, index) => ({
+  id: `qt-${item.id}`,
+  restaurantId: quicktapRestaurant.id,
+  categoryId: `qt-${item.category}`,
+  name: item.name,
+  description: item.description ?? "",
+  price: item.price,
+  isAvailable: true,
+  isFeatured: item.badge === "popular" || item.badge === "chef",
+  sortOrder: index + 1,
+  imageUrl: item.image,
+  badge: item.badge,
+  dietary: item.dietary,
+}));
+
+// ---------------------------------------------------------------------------
+// MOMcha — matcha café, Mombasa (momcha.vercel.app). Sections use sub-groups
+// (`group`) and small/large pricing (`priceLarge`).
+// ---------------------------------------------------------------------------
+
+const momchaRestaurant: Restaurant = {
+  id: "rest_momcha",
+  slug: "momcha",
+  name: "MOMcha",
+  tagline: "Sip. Smile. Repeat.",
+  description:
+    "Matcha lattes, specialty coffee, iced drinks, mojitos, waffles and more — Mombasa's matcha café.",
+  phone: "+254 700 123 456",
+  whatsapp: "+254 700 123 456",
+  email: "hello@momcha.co.ke",
+  address: "Mombasa, Kenya",
+  currency: "KSh",
+  openingHours: "Tuesday – Sunday · 11:00 AM – 11:00 PM",
+  isPublished: true,
+  createdAt: "2026-07-03T09:00:00Z",
+};
+
+interface MomchaSeedItem {
+  name: string;
+  price: number;
+  priceLarge?: number;
+  group?: string;
+}
+
+const momchaSeed: { id: string; title: string; items: MomchaSeedItem[] }[] = [
+  {
+    id: "matcha",
+    title: "Matcha",
+    items: [
+      { name: "Matcha Latte", price: 650, group: "Classic Sips" },
+      { name: "Vanilla Matcha Latte", price: 750, group: "Classic Sips" },
+      { name: "Caramel Matcha Latte", price: 750, group: "Classic Sips" },
+      { name: "Coconut Matcha Latte", price: 750, group: "Classic Sips" },
+      { name: "Mango Matcha Latte", price: 750, group: "Fruity Sips" },
+      { name: "Blueberry Matcha Latte", price: 750, group: "Fruity Sips" },
+      { name: "Strawberry Matcha Latte", price: 750, group: "Fruity Sips" },
+      { name: "Mixed Berry Matcha Latte", price: 750, group: "Fruity Sips" },
+      { name: "Lotus Matcha Latte", price: 750, group: "Decadent Sips" },
+      { name: "White Choc Matcha Latte", price: 750, group: "Decadent Sips" },
+    ],
+  },
+  {
+    id: "coffee",
+    title: "Coffee",
+    items: [
+      { name: "Latte", price: 350 },
+      { name: "Espresso", price: 200 },
+      { name: "Cappuccino", price: 350 },
+      { name: "Caffè Mocha", price: 400 },
+      { name: "Flat White", price: 350 },
+      { name: "Americano", price: 250 },
+      { name: "Spanish Latte", price: 350 },
+      { name: "Latte Macchiato", price: 350 },
+      { name: "Espresso Macchiato", price: 250 },
+    ],
+  },
+  {
+    id: "iced-coffee",
+    title: "Iced Coffee",
+    items: [
+      { name: "Iced Latte", price: 400 },
+      { name: "Iced Cappuccino", price: 400 },
+      { name: "Iced Americano", price: 350 },
+      { name: "Iced Mocha", price: 450 },
+      { name: "Iced Spanish Latte", price: 500 },
+    ],
+  },
+  {
+    id: "warm-drinks",
+    title: "Warm Drinks",
+    items: [
+      { name: "Matcha Latte", price: 400 },
+      { name: "Karak", price: 400 },
+      { name: "Hot Chocolate", price: 350 },
+      { name: "Dawa", price: 350 },
+    ],
+  },
+  {
+    id: "iced-drinks",
+    title: "Iced Drinks",
+    items: [
+      { name: "Iced Karak", price: 500 },
+      { name: "Cold Dawa", price: 400 },
+    ],
+  },
+  {
+    id: "mojitos",
+    title: "Mojitos",
+    items: [
+      { name: "Classic", price: 550, priceLarge: 650 },
+      { name: "Strawberry", price: 550, priceLarge: 650 },
+      { name: "Passion", price: 550, priceLarge: 650 },
+      { name: "Mixed Berry", price: 550, priceLarge: 650 },
+    ],
+  },
+  {
+    id: "waffles",
+    title: "Waffles",
+    items: [
+      { name: "Lotus Waffle", price: 650 },
+      { name: "Chocolate Waffle", price: 650 },
+      { name: "Pistachio Waffle", price: 650 },
+      { name: "Scoop of Ice Cream", price: 100 },
+    ],
+  },
+  {
+    id: "extras",
+    title: "Extras",
+    items: [
+      { name: "Shot of Matcha", price: 150 },
+      { name: "Shot of Flavour", price: 100 },
+      { name: "Upsize to Large", price: 100 },
+      { name: "Oat Milk", price: 100 },
+      { name: "Almond Milk", price: 100 },
+    ],
+  },
+  {
+    id: "cold-foams",
+    title: "Cold Foams",
+    items: [
+      { name: "Sea Salt & Vanilla", price: 50 },
+      { name: "Cinnamon & Coconut", price: 50 },
+      { name: "Cardamom & Date", price: 50 },
+    ],
+  },
+];
+
+const momchaCategories: MenuCategory[] = momchaSeed.map((section, index) => ({
+  id: `mo-${section.id}`,
+  restaurantId: momchaRestaurant.id,
+  name: section.title,
+  description: "",
+  sortOrder: index + 1,
+}));
+
+const momchaItems: MenuItem[] = momchaSeed.flatMap((section) =>
+  section.items.map((item, index) => ({
+    id: `mo-${section.id}-${slugify(item.name)}`,
+    restaurantId: momchaRestaurant.id,
+    categoryId: `mo-${section.id}`,
+    name: item.name,
+    description: "",
+    price: item.price,
+    isAvailable: true,
+    isFeatured: false,
+    sortOrder: index + 1,
+    group: item.group,
+    priceLarge: item.priceLarge,
+  }))
+);
+
+// ---------------------------------------------------------------------------
+
+export const mockRestaurants: Restaurant[] = [
+  hanamRestaurant,
+  momchaRestaurant,
+  quicktapRestaurant,
+  saffronRestaurant,
+];
 export const mockCategories: MenuCategory[] = [
   ...hanamCategories,
+  ...momchaCategories,
+  ...quicktapCategories,
   ...saffronCategories,
 ];
-export const mockItems: MenuItem[] = [...hanamItems, ...saffronItems];
+export const mockItems: MenuItem[] = [
+  ...hanamItems,
+  ...momchaItems,
+  ...quicktapItems,
+  ...saffronItems,
+];
 
-// The restaurant the admin console manages in this single-tenant MVP.
+// The restaurant the admin opens on first load.
 export const adminRestaurant = hanamRestaurant;

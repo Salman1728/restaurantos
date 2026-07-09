@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -10,13 +11,17 @@ import {
   Settings,
   Globe,
   ArrowUpRight,
+  Check,
+  ChevronsUpDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { restaurant, items } = useStore();
+  const { restaurant, restaurants, setActiveRestaurant, items, notify } =
+    useStore();
+  const [switcherOpen, setSwitcherOpen] = useState(false);
   const soldOut = items.filter((i) => !i.isAvailable).length;
 
   const nav = [
@@ -88,7 +93,45 @@ export function Sidebar() {
       </nav>
 
       <div className="m-3 overflow-hidden rounded-xl border border-white/5 bg-white/[0.03]">
-        <div className="flex items-center gap-3 p-3.5">
+        {switcherOpen && (
+          <div className="border-b border-white/5 py-1.5">
+            <div className="px-3.5 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-stone-500">
+              Restaurants
+            </div>
+            {restaurants.map((r) => (
+              <button
+                key={r.id}
+                onClick={() => {
+                  setActiveRestaurant(r.id);
+                  setSwitcherOpen(false);
+                  if (r.id !== restaurant.id) notify(`Switched to ${r.name}`);
+                }}
+                className={cn(
+                  "flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm transition-colors hover:bg-white/[0.05]",
+                  r.id === restaurant.id
+                    ? "text-white"
+                    : "text-sidebar-foreground"
+                )}
+              >
+                <span
+                  className={cn(
+                    "h-1.5 w-1.5 shrink-0 rounded-full",
+                    r.isPublished ? "bg-emerald-400" : "bg-stone-500"
+                  )}
+                />
+                <span className="min-w-0 flex-1 truncate">{r.name}</span>
+                {r.id === restaurant.id && (
+                  <Check className="h-3.5 w-3.5 text-orange-400" />
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+        <button
+          onClick={() => setSwitcherOpen((o) => !o)}
+          className="flex w-full items-center gap-3 p-3.5 text-left transition-colors hover:bg-white/[0.04]"
+          title="Switch restaurant"
+        >
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-stone-700 to-stone-800 text-sm font-semibold text-white ring-1 ring-white/10">
             {restaurant.name
               .split(" ")
@@ -96,7 +139,7 @@ export function Sidebar() {
               .map((w) => w[0])
               .join("")}
           </div>
-          <div className="min-w-0 leading-tight">
+          <div className="min-w-0 flex-1 leading-tight">
             <div className="truncate text-sm font-medium text-white">
               {restaurant.name}
             </div>
@@ -115,7 +158,8 @@ export function Sidebar() {
               {restaurant.isPublished ? "Menu live" : "Draft"}
             </div>
           </div>
-        </div>
+          <ChevronsUpDown className="h-4 w-4 shrink-0 text-stone-500" />
+        </button>
         <a
           href={`/api/public/menu/${restaurant.slug}`}
           target="_blank"
