@@ -9,14 +9,25 @@ import {
   type ReactNode,
 } from "react";
 import type { MenuCategory, MenuItem, Restaurant } from "@/lib/types";
-import { adminRestaurant, mockCategories, mockItems, mockRestaurants } from "@/lib/data/mock";
+import {
+  createRestaurant as createRestaurantAction,
+  deleteCategoryAction,
+  deleteItemAction,
+  saveCategory,
+  saveItem,
+  saveRestaurant,
+  type ActionResult,
+} from "@/app/actions";
 
 // Client-side state for the admin dashboard (multi-restaurant).
 //
-// Every mutation below corresponds to one Supabase write. When wiring
-// Supabase, keep the optimistic state updates and add the matching
-// insert/update/delete call inside each action. All reads/writes are
-// scoped to the active restaurant — ids are only unique per restaurant.
+// The admin layout fetches all tenants' data server-side (Firestore) and
+// feeds it in as props. Every mutation applies an optimistic local update,
+// then persists through the matching server action; failures surface as a
+// toast so the admin knows to retry. When Firebase isn't configured
+// (`persisted: false`) the store runs in-memory as a demo, exactly like
+// the original mock setup. All reads/writes are scoped to the active
+// restaurant.
 
 interface Toast {
   id: number;
@@ -27,6 +38,7 @@ interface StoreValue {
   restaurants: Restaurant[];
   restaurant: Restaurant;
   setActiveRestaurant: (id: string) => void;
+  addRestaurant: (name: string) => Promise<boolean>;
   categories: MenuCategory[];
   items: MenuItem[];
   toasts: Toast[];
@@ -44,15 +56,32 @@ interface StoreValue {
 
 const StoreContext = createContext<StoreValue | null>(null);
 
-let nextId = 100;
-const genId = (prefix: string) => `${prefix}_${nextId++}`;
+const genId = (prefix: string) =>
+  `${prefix}_${crypto.randomUUID().replace(/-/g, "").slice(0, 20)}`;
 
-export function StoreProvider({ children }: { children: ReactNode }) {
-  const [restaurants, setRestaurants] = useState<Restaurant[]>(mockRestaurants);
-  const [activeId, setActiveId] = useState<string>(adminRestaurant.id);
+interface StoreProviderProps {
+  children: ReactNode;
+  initialRestaurants: Restaurant[];
+  initialCategories: MenuCategory[];
+  initialItems: MenuItem[];
+  persisted: boolean;
+}
+
+export function StoreProvider({
+  children,
+  initialRestaurants,
+  initialCategories,
+  initialItems,
+  persisted,
+}: StoreProviderProps) {
+  const [restaurants, setRestaurants] =
+    useState<Restaurant[]>(initialRestaurants);
+  const [activeId, setActiveId] = useState<string>(
+    initialRestaurants[0]?.id ?? ""
+  );
   const [allCategories, setAllCategories] =
-    useState<MenuCategory[]>(mockCategories);
-  const [allItems, setAllItems] = useState<MenuItem[]>(mockItems);
+    useState<MenuCategory[]>(initialCategories);
+  const [allItems, setAllItems] = useState<MenuItem[]>(initialItems);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const restaurant =
@@ -73,98 +102,149 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 2600);
   }, []);
 
+  // Fire-and-report persistence: the optimistic update already happened;
+  // only failures need the admin's attention.
+  const persist = useCallback(
+    (write: () => Promise<ActionResult>) => {
+      if (!persisted) return;
+      write()
+        .then((res) => {
+          if (!res.ok) notify(`Not saved: ${res.error ?? "unknown error"}`);
+        })
+        .catch(() => notify("Not saved: network error"));
+    },
+    [persisted, notify]
+  );
+
   const setActiveRestaurant = useCallback((id: string) => {
     setActiveId(id);
   }, []);
+
+  const addRestaurant = useCallback(
+    async (name: string): Promise<boolean> => {
+      if (!persisted) {
+        const restaurant: Restaurant = {
+          id: genId("rest"),
+          slug: name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+          name: name.trim(),
+          tagline: "",
+          description: "",
+          phone: "",
+          whatsapp: "",
+          email: "",
+          address: "",
+          currency: "KES",
+          openingHours: "",
+          isPublished: false,
+          createdAt: new Date().toISOString(),
+        };
+        setRestaurants((rs) => [...rs, restaurant]);
+        setActiveId(restaurant.id);
+        return true;
+      }
+      try {
+        const res = await createRestaurantAction(name);
+        if (!res.ok || !res.restaurant) {
+          notify(`Not created: ${res.error ?? "unknown error"}`);
+          return false;
+        }
+        const created = res.restaurant;
+        setRestaurants((rs) => [...rs, created]);
+        setActiveId(created.id);
+        return true;
+      } catch {
+        notify("Not created: network error");
+        return false;
+      }
+    },
+    [persisted, notify]
+  );
 
   const updateRestaurant = useCallback(
     (patch: Partial<Restaurant>) => {
       setRestaurants((rs) =>
         rs.map((r) => (r.id === activeId ? { ...r, ...patch } : r))
       );
+      persist(() => saveRestaurant(activeId, patch));
     },
-    [activeId]
+    [activeId, persist]
   );
 
   const addCategory = useCallback(
     (data: Pick<MenuCategory, "name" | "description">) => {
-      setAllCategories((cats) => [
-        ...cats,
-        {
-          id: genId("cat"),
-          restaurantId: activeId,
-          sortOrder:
-            cats.filter((c) => c.restaurantId === activeId).length + 1,
-          ...data,
-        },
-      ]);
+      const category: MenuCategory = {
+        id: genId("cat"),
+        restaurantId: activeId,
+        sortOrder:
+          allCategories.filter((c) => c.restaurantId === activeId).length + 1,
+        ...data,
+      };
+      setAllCategories((cats) => [...cats, category]);
+      persist(() => saveCategory(category));
     },
-    [activeId]
+    [activeId, allCategories, persist]
   );
 
   const updateCategory = useCallback(
     (id: string, patch: Partial<MenuCategory>) => {
-      setAllCategories((cats) =>
-        cats.map((c) =>
-          c.id === id && c.restaurantId === activeId ? { ...c, ...patch } : c
-        )
+      const current = allCategories.find(
+        (c) => c.id === id && c.restaurantId === activeId
       );
+      if (!current) return;
+      const next = { ...current, ...patch };
+      setAllCategories((cats) =>
+        cats.map((c) => (c.id === id ? next : c))
+      );
+      persist(() => saveCategory(next));
     },
-    [activeId]
+    [activeId, allCategories, persist]
   );
 
   // Returns false when the category still has items — caller shows the error.
   const deleteCategory = useCallback(
     (id: string): boolean => {
-      let ok = false;
-      setAllItems((currentItems) => {
-        const hasItems = currentItems.some(
-          (i) => i.categoryId === id && i.restaurantId === activeId
-        );
-        if (!hasItems) {
-          ok = true;
-          setAllCategories((cats) =>
-            cats.filter(
-              (c) => !(c.id === id && c.restaurantId === activeId)
-            )
-          );
-        }
-        return currentItems;
-      });
-      return ok;
+      const hasItems = allItems.some(
+        (i) => i.categoryId === id && i.restaurantId === activeId
+      );
+      if (hasItems) return false;
+      setAllCategories((cats) =>
+        cats.filter((c) => !(c.id === id && c.restaurantId === activeId))
+      );
+      persist(() => deleteCategoryAction(id));
+      return true;
     },
-    [activeId]
+    [activeId, allItems, persist]
   );
 
   const addItem = useCallback(
     (data: Omit<MenuItem, "id" | "restaurantId" | "sortOrder">) => {
-      setAllItems((its) => [
-        ...its,
-        {
-          id: genId("item"),
-          restaurantId: activeId,
-          sortOrder:
-            its.filter(
-              (i) =>
-                i.categoryId === data.categoryId &&
-                i.restaurantId === activeId
-            ).length + 1,
-          ...data,
-        },
-      ]);
+      const item: MenuItem = {
+        id: genId("item"),
+        restaurantId: activeId,
+        sortOrder:
+          allItems.filter(
+            (i) =>
+              i.categoryId === data.categoryId && i.restaurantId === activeId
+          ).length + 1,
+        ...data,
+      };
+      setAllItems((its) => [...its, item]);
+      persist(() => saveItem(item));
     },
-    [activeId]
+    [activeId, allItems, persist]
   );
 
   const updateItem = useCallback(
     (id: string, patch: Partial<MenuItem>) => {
-      setAllItems((its) =>
-        its.map((i) =>
-          i.id === id && i.restaurantId === activeId ? { ...i, ...patch } : i
-        )
+      const current = allItems.find(
+        (i) => i.id === id && i.restaurantId === activeId
       );
+      if (!current) return;
+      const next = { ...current, ...patch };
+      setAllItems((its) => its.map((i) => (i.id === id ? next : i)));
+      persist(() => saveItem(next));
     },
-    [activeId]
+    [activeId, allItems, persist]
   );
 
   const deleteItem = useCallback(
@@ -172,8 +252,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setAllItems((its) =>
         its.filter((i) => !(i.id === id && i.restaurantId === activeId))
       );
+      persist(() => deleteItemAction(id));
     },
-    [activeId]
+    [activeId, persist]
   );
 
   return (
@@ -182,6 +263,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         restaurants,
         restaurant,
         setActiveRestaurant,
+        addRestaurant,
         categories,
         items,
         toasts,

@@ -1,9 +1,10 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/lib/store";
+import { logout } from "@/app/actions";
 
 const titles: Record<string, string> = {
   "/dashboard": "Overview",
@@ -41,6 +42,14 @@ export function Topbar() {
           >
             {restaurant.name[0]}
           </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => logout()}
+            title="Sign out"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+          </Button>
         </div>
       </div>
     </header>

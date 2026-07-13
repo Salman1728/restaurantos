@@ -1,12 +1,37 @@
 import type { ReactNode } from "react";
+import { redirect } from "next/navigation";
 import { StoreProvider } from "@/lib/store";
 import { Sidebar } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
 import { Toaster } from "@/components/toaster";
+import { isAuthed } from "@/lib/auth";
+import { isFirebaseConfigured } from "@/lib/firebase";
+import {
+  getAllCategories,
+  getAllItems,
+  getAllRestaurants,
+} from "@/lib/data";
 
-export default function AdminLayout({ children }: { children: ReactNode }) {
+export default async function AdminLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  if (!(await isAuthed())) redirect("/login");
+
+  const [restaurants, categories, items] = await Promise.all([
+    getAllRestaurants(),
+    getAllCategories(),
+    getAllItems(),
+  ]);
+
   return (
-    <StoreProvider>
+    <StoreProvider
+      initialRestaurants={restaurants}
+      initialCategories={categories}
+      initialItems={items}
+      persisted={isFirebaseConfigured()}
+    >
       <div className="min-h-screen">
         <Sidebar />
         <div className="ml-64">

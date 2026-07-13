@@ -41,3 +41,6 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# Firebase Admin SDK key (never commit)
+firebase-service-account.json

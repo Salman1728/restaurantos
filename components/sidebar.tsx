@@ -13,15 +13,39 @@ import {
   ArrowUpRight,
   Check,
   ChevronsUpDown,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { restaurant, restaurants, setActiveRestaurant, items, notify } =
-    useStore();
+  const {
+    restaurant,
+    restaurants,
+    setActiveRestaurant,
+    addRestaurant,
+    items,
+    notify,
+  } = useStore();
   const [switcherOpen, setSwitcherOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  const submitNewRestaurant = async () => {
+    const name = newName.trim();
+    if (!name || creating) return;
+    setCreating(true);
+    const ok = await addRestaurant(name);
+    setCreating(false);
+    if (ok) {
+      notify(`Created ${name}`);
+      setNewName("");
+      setAdding(false);
+      setSwitcherOpen(false);
+    }
+  };
   const soldOut = items.filter((i) => !i.isAvailable).length;
 
   const nav = [
@@ -125,6 +149,42 @@ export function Sidebar() {
                 )}
               </button>
             ))}
+            {adding ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  submitNewRestaurant();
+                }}
+                className="px-3.5 py-2"
+              >
+                <input
+                  autoFocus
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      setAdding(false);
+                      setNewName("");
+                    }
+                  }}
+                  placeholder="Restaurant name…"
+                  disabled={creating}
+                  className="w-full rounded-md border border-white/10 bg-white/[0.05] px-2.5 py-1.5 text-sm text-white placeholder:text-stone-500 focus:border-orange-500/60 focus:outline-none"
+                />
+                <div className="mt-1.5 flex items-center justify-between text-[11px] text-stone-500">
+                  <span>{creating ? "Creating…" : "Enter to create"}</span>
+                  <span>Esc to cancel</span>
+                </div>
+              </form>
+            ) : (
+              <button
+                onClick={() => setAdding(true)}
+                className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-sidebar-foreground transition-colors hover:bg-white/[0.05] hover:text-white"
+              >
+                <Plus className="h-3.5 w-3.5 shrink-0 text-orange-400" />
+                Add restaurant
+              </button>
+            )}
           </div>
         )}
         <button
