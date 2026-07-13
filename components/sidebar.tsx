@@ -13,6 +13,7 @@ import {
   ArrowUpRight,
   Check,
   ChevronsUpDown,
+  Megaphone,
   Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -57,6 +58,7 @@ export function Sidebar() {
       badge: soldOut > 0 ? soldOut : undefined,
     },
     { href: "/menu/categories", label: "Categories", icon: FolderOpen },
+    { href: "/promotions", label: "Promotions", icon: Megaphone },
     { href: "/settings", label: "Settings", icon: Settings },
   ];
 

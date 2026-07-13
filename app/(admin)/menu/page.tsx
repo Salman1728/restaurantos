@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
-import { Check, Pencil, Plus, Search, Star, Trash2, X } from "lucide-react";
+import { Check, Flame, Pencil, Plus, Search, Star, Trash2, X } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -224,6 +224,32 @@ export default function MenuItemsPage() {
                             "h-4 w-4",
                             item.isFeatured
                               ? "fill-amber-400 text-amber-400"
+                              : "text-stone-300"
+                          )}
+                        />
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          updateItem(item.id, { isSpecial: !item.isSpecial });
+                          notify(
+                            item.isSpecial
+                              ? "Removed from today's specials"
+                              : "Added to today's specials"
+                          );
+                        }}
+                        title={
+                          item.isSpecial
+                            ? "Remove from today's specials"
+                            : "Make it a today's special"
+                        }
+                        className="shrink-0 rounded-md p-1 transition-colors hover:bg-muted"
+                      >
+                        <Flame
+                          className={cn(
+                            "h-4 w-4",
+                            item.isSpecial
+                              ? "fill-orange-500 text-orange-500"
                               : "text-stone-300"
                           )}
                         />

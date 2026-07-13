@@ -10,6 +10,7 @@ const titles: Record<string, string> = {
   "/dashboard": "Overview",
   "/menu": "Menu Items",
   "/menu/categories": "Categories",
+  "/promotions": "Promotions",
   "/settings": "Settings",
 };
 

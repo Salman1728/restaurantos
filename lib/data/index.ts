@@ -1,4 +1,4 @@
-import type { MenuCategory, MenuItem, Restaurant } from "@/lib/types";
+import type { MenuCategory, MenuItem, Promo, Restaurant } from "@/lib/types";
 import { getDb } from "@/lib/firebase";
 import { mockCategories, mockItems, mockRestaurants } from "./mock";
 
@@ -81,6 +81,22 @@ export async function getMenuItems(
   }
 }
 
+export async function getPromos(restaurantId: string): Promise<Promo[]> {
+  const db = getDb();
+  // No mock promos exist — unconfigured/demo mode simply has none.
+  if (!db) return [];
+  try {
+    const snap = await db
+      .collection("promos")
+      .where("restaurantId", "==", restaurantId)
+      .get();
+    return snap.docs.map((d) => fromDoc<Promo>(d)).sort(bySortOrder);
+  } catch (err) {
+    console.error("Firestore getPromos failed:", err);
+    return [];
+  }
+}
+
 // ---------- Admin (all tenants at once, feeds the dashboard store) ----------
 
 const byCreatedAt = (a: Restaurant, b: Restaurant) =>
@@ -111,6 +127,18 @@ export async function getAllCategories(): Promise<MenuCategory[]> {
   } catch (err) {
     console.error("Firestore getAllCategories failed:", err);
     return [...mockCategories];
+  }
+}
+
+export async function getAllPromos(): Promise<Promo[]> {
+  const db = getDb();
+  if (!db) return [];
+  try {
+    const snap = await db.collection("promos").get();
+    return snap.docs.map((d) => fromDoc<Promo>(d)).sort(bySortOrder);
+  } catch (err) {
+    console.error("Firestore getAllPromos failed:", err);
+    return [];
   }
 }
 

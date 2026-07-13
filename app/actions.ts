@@ -10,7 +10,7 @@ import {
   verifyPassword,
 } from "@/lib/auth";
 import { getDb } from "@/lib/firebase";
-import type { MenuCategory, MenuItem, Restaurant } from "@/lib/types";
+import type { MenuCategory, MenuItem, Promo, Restaurant } from "@/lib/types";
 
 // Server actions behind every admin mutation. The client store applies
 // optimistic updates and calls these to persist; each one verifies the
@@ -52,7 +52,13 @@ async function requireAdminAndDb() {
 }
 
 function revalidateAdmin() {
-  for (const path of ["/dashboard", "/menu", "/menu/categories", "/settings"]) {
+  for (const path of [
+    "/dashboard",
+    "/menu",
+    "/menu/categories",
+    "/promotions",
+    "/settings",
+  ]) {
     revalidatePath(path);
   }
 }
@@ -162,6 +168,30 @@ export async function deleteCategoryAction(id: string): Promise<ActionResult> {
     if (!items.empty)
       return { ok: false, error: "Category still has items" };
     await db.collection("categories").doc(id).delete();
+    revalidateAdmin();
+    return { ok: true };
+  } catch (e) {
+    return failed(e);
+  }
+}
+
+// ---------- Promotions ----------
+
+export async function savePromo(promo: Promo): Promise<ActionResult> {
+  try {
+    const db = await requireAdminAndDb();
+    await db.collection("promos").doc(promo.id).set(toDoc(promo));
+    revalidateAdmin();
+    return { ok: true };
+  } catch (e) {
+    return failed(e);
+  }
+}
+
+export async function deletePromoAction(id: string): Promise<ActionResult> {
+  try {
+    const db = await requireAdminAndDb();
+    await db.collection("promos").doc(id).delete();
     revalidateAdmin();
     return { ok: true };
   } catch (e) {

@@ -18,6 +18,18 @@ export interface Restaurant {
   createdAt: string;
 }
 
+export interface Promo {
+  id: string;
+  restaurantId: string;
+  title: string;
+  description: string;
+  // Short highlight chip shown on banners, e.g. "20% OFF" or "2-for-1".
+  badge: string;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: string;
+}
+
 export interface MenuCategory {
   id: string;
   restaurantId: string;
@@ -35,6 +47,9 @@ export interface MenuItem {
   price: number;
   isAvailable: boolean;
   isFeatured: boolean;
+  // Today's special — optional so documents written before the field
+  // existed keep working (undefined reads as false).
+  isSpecial?: boolean;
   sortOrder: number;
   // Optional presentation fields — client sites that use them (photo
   // menus, grouped sections, size variants) get them via the public API;

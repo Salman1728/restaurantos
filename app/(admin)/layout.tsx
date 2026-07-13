@@ -9,6 +9,7 @@ import { isFirebaseConfigured } from "@/lib/firebase";
 import {
   getAllCategories,
   getAllItems,
+  getAllPromos,
   getAllRestaurants,
 } from "@/lib/data";
 
@@ -19,10 +20,11 @@ export default async function AdminLayout({
 }) {
   if (!(await isAuthed())) redirect("/login");
 
-  const [restaurants, categories, items] = await Promise.all([
+  const [restaurants, categories, items, promos] = await Promise.all([
     getAllRestaurants(),
     getAllCategories(),
     getAllItems(),
+    getAllPromos(),
   ]);
 
   return (
@@ -30,6 +32,7 @@ export default async function AdminLayout({
       initialRestaurants={restaurants}
       initialCategories={categories}
       initialItems={items}
+      initialPromos={promos}
       persisted={isFirebaseConfigured()}
     >
       <div className="min-h-screen">

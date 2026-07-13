@@ -8,13 +8,15 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { MenuCategory, MenuItem, Restaurant } from "@/lib/types";
+import type { MenuCategory, MenuItem, Promo, Restaurant } from "@/lib/types";
 import {
   createRestaurant as createRestaurantAction,
   deleteCategoryAction,
   deleteItemAction,
+  deletePromoAction,
   saveCategory,
   saveItem,
+  savePromo,
   saveRestaurant,
   type ActionResult,
 } from "@/app/actions";
@@ -41,9 +43,15 @@ interface StoreValue {
   addRestaurant: (name: string) => Promise<boolean>;
   categories: MenuCategory[];
   items: MenuItem[];
+  promos: Promo[];
   toasts: Toast[];
   notify: (message: string) => void;
   updateRestaurant: (patch: Partial<Restaurant>) => void;
+  addPromo: (
+    data: Pick<Promo, "title" | "description" | "badge" | "isActive">
+  ) => void;
+  updatePromo: (id: string, patch: Partial<Promo>) => void;
+  deletePromo: (id: string) => void;
   addCategory: (data: Pick<MenuCategory, "name" | "description">) => void;
   updateCategory: (id: string, patch: Partial<MenuCategory>) => void;
   deleteCategory: (id: string) => boolean;
@@ -64,6 +72,7 @@ interface StoreProviderProps {
   initialRestaurants: Restaurant[];
   initialCategories: MenuCategory[];
   initialItems: MenuItem[];
+  initialPromos: Promo[];
   persisted: boolean;
 }
 
@@ -72,6 +81,7 @@ export function StoreProvider({
   initialRestaurants,
   initialCategories,
   initialItems,
+  initialPromos,
   persisted,
 }: StoreProviderProps) {
   const [restaurants, setRestaurants] =
@@ -82,6 +92,7 @@ export function StoreProvider({
   const [allCategories, setAllCategories] =
     useState<MenuCategory[]>(initialCategories);
   const [allItems, setAllItems] = useState<MenuItem[]>(initialItems);
+  const [allPromos, setAllPromos] = useState<Promo[]>(initialPromos);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const restaurant =
@@ -94,6 +105,10 @@ export function StoreProvider({
   const items = useMemo(
     () => allItems.filter((i) => i.restaurantId === activeId),
     [allItems, activeId]
+  );
+  const promos = useMemo(
+    () => allPromos.filter((p) => p.restaurantId === activeId),
+    [allPromos, activeId]
   );
 
   const notify = useCallback((message: string) => {
@@ -166,6 +181,45 @@ export function StoreProvider({
         rs.map((r) => (r.id === activeId ? { ...r, ...patch } : r))
       );
       persist(() => saveRestaurant(activeId, patch));
+    },
+    [activeId, persist]
+  );
+
+  const addPromo = useCallback(
+    (data: Pick<Promo, "title" | "description" | "badge" | "isActive">) => {
+      const promo: Promo = {
+        id: genId("promo"),
+        restaurantId: activeId,
+        sortOrder:
+          allPromos.filter((p) => p.restaurantId === activeId).length + 1,
+        createdAt: new Date().toISOString(),
+        ...data,
+      };
+      setAllPromos((ps) => [...ps, promo]);
+      persist(() => savePromo(promo));
+    },
+    [activeId, allPromos, persist]
+  );
+
+  const updatePromo = useCallback(
+    (id: string, patch: Partial<Promo>) => {
+      const current = allPromos.find(
+        (p) => p.id === id && p.restaurantId === activeId
+      );
+      if (!current) return;
+      const next = { ...current, ...patch };
+      setAllPromos((ps) => ps.map((p) => (p.id === id ? next : p)));
+      persist(() => savePromo(next));
+    },
+    [activeId, allPromos, persist]
+  );
+
+  const deletePromo = useCallback(
+    (id: string) => {
+      setAllPromos((ps) =>
+        ps.filter((p) => !(p.id === id && p.restaurantId === activeId))
+      );
+      persist(() => deletePromoAction(id));
     },
     [activeId, persist]
   );
@@ -266,9 +320,13 @@ export function StoreProvider({
         addRestaurant,
         categories,
         items,
+        promos,
         toasts,
         notify,
         updateRestaurant,
+        addPromo,
+        updatePromo,
+        deletePromo,
         addCategory,
         updateCategory,
         deleteCategory,

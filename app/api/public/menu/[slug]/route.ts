@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   getCategories,
   getMenuItems,
+  getPromos,
   getRestaurantBySlug,
 } from "@/lib/data";
 
@@ -12,8 +13,9 @@ import {
 // Response shape (the contract client sites integrate against):
 // {
 //   restaurant: { name, slug, whatsappNumber, currency, tagline, address, openingHours },
+//   promos: [{ id, title, description, badge }],            // active only
 //   categories: [{ id, name, items: [{ id, name, description, price,
-//                                      currency, available, featured }] }]
+//                                      currency, available, featured, special }] }]
 // }
 
 const corsHeaders = {
@@ -45,9 +47,10 @@ export async function GET(
     );
   }
 
-  const [categories, items] = await Promise.all([
+  const [categories, items, promos] = await Promise.all([
     getCategories(restaurant.id),
     getMenuItems(restaurant.id),
+    getPromos(restaurant.id),
   ]);
 
   return NextResponse.json(
@@ -61,6 +64,14 @@ export async function GET(
         address: restaurant.address,
         openingHours: restaurant.openingHours,
       },
+      promos: promos
+        .filter((p) => p.isActive)
+        .map((p) => ({
+          id: p.id,
+          title: p.title,
+          description: p.description,
+          badge: p.badge || null,
+        })),
       categories: categories.map((cat) => ({
         id: cat.id,
         name: cat.name,
@@ -74,6 +85,7 @@ export async function GET(
             currency: restaurant.currency,
             available: i.isAvailable,
             featured: i.isFeatured,
+            special: i.isSpecial ?? false,
             // Optional presentation fields — null when the restaurant
             // doesn't use them (photo menus, grouped sections, sizes).
             imageUrl: i.imageUrl ?? null,
