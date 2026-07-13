@@ -18,6 +18,14 @@ export interface Restaurant {
   createdAt: string;
 }
 
+/** One day of menu-view counts for one restaurant (doc id: `${restaurantId}_${date}`). */
+export interface MenuViewStat {
+  restaurantId: string;
+  /** YYYY-MM-DD in Africa/Nairobi time (EAT has no DST). */
+  date: string;
+  count: number;
+}
+
 export interface Promo {
   id: string;
   restaurantId: string;

@@ -8,7 +8,13 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { MenuCategory, MenuItem, Promo, Restaurant } from "@/lib/types";
+import type {
+  MenuCategory,
+  MenuItem,
+  MenuViewStat,
+  Promo,
+  Restaurant,
+} from "@/lib/types";
 import {
   createRestaurant as createRestaurantAction,
   deleteCategoryAction,
@@ -44,6 +50,8 @@ interface StoreValue {
   categories: MenuCategory[];
   items: MenuItem[];
   promos: Promo[];
+  /** Daily menu-view counts for the active restaurant (read-only). */
+  views: MenuViewStat[];
   toasts: Toast[];
   notify: (message: string) => void;
   updateRestaurant: (patch: Partial<Restaurant>) => void;
@@ -73,6 +81,7 @@ interface StoreProviderProps {
   initialCategories: MenuCategory[];
   initialItems: MenuItem[];
   initialPromos: Promo[];
+  initialViews: MenuViewStat[];
   persisted: boolean;
 }
 
@@ -82,6 +91,7 @@ export function StoreProvider({
   initialCategories,
   initialItems,
   initialPromos,
+  initialViews,
   persisted,
 }: StoreProviderProps) {
   const [restaurants, setRestaurants] =
@@ -109,6 +119,10 @@ export function StoreProvider({
   const promos = useMemo(
     () => allPromos.filter((p) => p.restaurantId === activeId),
     [allPromos, activeId]
+  );
+  const views = useMemo(
+    () => initialViews.filter((v) => v.restaurantId === activeId),
+    [initialViews, activeId]
   );
 
   const notify = useCallback((message: string) => {
@@ -321,6 +335,7 @@ export function StoreProvider({
         categories,
         items,
         promos,
+        views,
         toasts,
         notify,
         updateRestaurant,

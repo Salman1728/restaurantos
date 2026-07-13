@@ -4,6 +4,7 @@ import {
   getMenuItems,
   getPromos,
   getRestaurantBySlug,
+  trackMenuView,
 } from "@/lib/data";
 
 // Public, unauthenticated menu feed consumed by restaurant websites
@@ -51,6 +52,8 @@ export async function GET(
     getCategories(restaurant.id),
     getMenuItems(restaurant.id),
     getPromos(restaurant.id),
+    // Analytics ride along with the data fetches; never throws.
+    trackMenuView(restaurant.id),
   ]);
 
   return NextResponse.json(

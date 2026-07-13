@@ -21,34 +21,50 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sparkline, WeeklyBars } from "@/components/charts";
+import { WeeklyBars } from "@/components/charts";
 import { useStore } from "@/lib/store";
 import { cn, formatPrice } from "@/lib/utils";
 
-// Mock analytics until Supabase lands — static so SSR/CSR stay in sync.
-const VIEW_TRENDS: Record<string, number[]> = {
-  items: [8, 9, 9, 10, 10, 11, 11, 11, 12, 12, 12, 12],
-  categories: [3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5],
-  featured: [1, 1, 2, 2, 3, 3, 3, 2, 2, 3, 3, 3],
-  soldOut: [0, 1, 1, 0, 0, 2, 1, 1, 3, 2, 2, 2],
-};
+const DAY_MS = 86_400_000;
+const EAT_OFFSET_MS = 3 * 3_600_000; // Africa/Nairobi is UTC+3, no DST
 
-const WEEKLY_VIEWS = [
-  { label: "Mon", value: 182 },
-  { label: "Tue", value: 214 },
-  { label: "Wed", value: 196 },
-  { label: "Thu", value: 241 },
-  { label: "Fri", value: 338 },
-  { label: "Sat", value: 402 },
-  { label: "Sun", value: 356 },
-];
+/** Last 7 days of view counts (oldest first) plus the total of the 7 before. */
+function weeklyViews(views: { date: string; count: number }[]) {
+  const byDate = new Map(views.map((v) => [v.date, v.count]));
+  const nowEat = Date.now() + EAT_OFFSET_MS;
+  const day = (daysAgo: number) => {
+    const d = new Date(nowEat - daysAgo * DAY_MS);
+    return {
+      key: d.toISOString().slice(0, 10),
+      label: d.toLocaleDateString("en-KE", {
+        weekday: "short",
+        timeZone: "UTC",
+      }),
+    };
+  };
+  const week = Array.from({ length: 7 }, (_, i) => {
+    const { key, label } = day(6 - i);
+    return { label, value: byDate.get(key) ?? 0 };
+  });
+  let prevWeekTotal = 0;
+  for (let i = 7; i < 14; i++) prevWeekTotal += byDate.get(day(i).key) ?? 0;
+  return { week, prevWeekTotal };
+}
 
 export default function DashboardPage() {
-  const { restaurant, categories, items, notify } = useStore();
+  const { restaurant, categories, items, views, notify } = useStore();
 
   const soldOut = items.filter((i) => !i.isAvailable);
   const featured = items.filter((i) => i.isFeatured);
+  const available = items.filter((i) => i.isAvailable);
   const apiUrl = `/api/public/menu/${restaurant.slug}`;
+
+  const { week, prevWeekTotal } = weeklyViews(views);
+  const weekTotal = week.reduce((s, d) => s + d.value, 0);
+  const weekDelta =
+    prevWeekTotal > 0
+      ? Math.round(((weekTotal - prevWeekTotal) / prevWeekTotal) * 100)
+      : null;
 
   const copyApiUrl = () => {
     navigator.clipboard.writeText(`${window.location.origin}${apiUrl}`);
@@ -59,28 +75,26 @@ export default function DashboardPage() {
     {
       label: "Menu items",
       value: items.length,
-      delta: "+2 this week",
-      up: true,
+      delta: `${available.length} available`,
+      up: available.length === items.length,
       icon: UtensilsCrossed,
-      trend: VIEW_TRENDS.items,
       href: "/menu",
     },
     {
       label: "Categories",
       value: categories.length,
-      delta: "+1 this week",
+      delta: "organising the menu",
       up: true,
       icon: FolderOpen,
-      trend: VIEW_TRENDS.categories,
       href: "/menu/categories",
     },
     {
       label: "Featured",
       value: featured.length,
-      delta: "steady",
-      up: true,
+      delta:
+        featured.length > 0 ? "shown on websites" : "star items to feature",
+      up: featured.length > 0,
       icon: Star,
-      trend: VIEW_TRENDS.featured,
       href: "/menu",
     },
     {
@@ -89,7 +103,6 @@ export default function DashboardPage() {
       delta: soldOut.length > 0 ? "needs attention" : "all clear",
       up: soldOut.length === 0,
       icon: AlertTriangle,
-      trend: VIEW_TRENDS.soldOut,
       href: "/menu",
     },
   ];
@@ -144,7 +157,7 @@ export default function DashboardPage() {
 
       {/* Stat tiles */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map(({ label, value, delta, up, icon: Icon, trend, href }) => (
+        {stats.map(({ label, value, delta, up, icon: Icon, href }) => (
           <Link key={label} href={href}>
             <Card className="group transition-all hover:-translate-y-0.5 hover:shadow-md">
               <CardContent className="p-5">
@@ -152,26 +165,23 @@ export default function DashboardPage() {
                   <span className="text-sm text-muted-foreground">{label}</span>
                   <Icon className="h-4 w-4 text-muted-foreground" />
                 </div>
-                <div className="mt-3 flex items-end justify-between gap-2">
-                  <div>
-                    <div className="text-3xl font-semibold tracking-tight">
-                      {value}
-                    </div>
-                    <div
-                      className={cn(
-                        "mt-1 flex items-center gap-1 text-xs font-medium",
-                        up ? "text-emerald-600" : "text-red-600"
-                      )}
-                    >
-                      {up ? (
-                        <ArrowUpRight className="h-3 w-3" />
-                      ) : (
-                        <ArrowDownRight className="h-3 w-3" />
-                      )}
-                      {delta}
-                    </div>
+                <div className="mt-3">
+                  <div className="text-3xl font-semibold tracking-tight">
+                    {value}
                   </div>
-                  <Sparkline points={trend} />
+                  <div
+                    className={cn(
+                      "mt-1 flex items-center gap-1 text-xs font-medium",
+                      up ? "text-emerald-600" : "text-red-600"
+                    )}
+                  >
+                    {up ? (
+                      <ArrowUpRight className="h-3 w-3" />
+                    ) : (
+                      <ArrowDownRight className="h-3 w-3" />
+                    )}
+                    {delta}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -186,20 +196,37 @@ export default function DashboardPage() {
             <div>
               <CardTitle>Menu views</CardTitle>
               <CardDescription>
-                Last 7 days · sample data until analytics connect
+                Live fetches of your public menu · last 7 days
               </CardDescription>
             </div>
             <div className="text-right">
               <div className="text-2xl font-semibold tracking-tight">
-                {WEEKLY_VIEWS.reduce((s, d) => s + d.value, 0).toLocaleString()}
+                {weekTotal.toLocaleString()}
               </div>
-              <div className="flex items-center justify-end gap-1 text-xs font-medium text-emerald-600">
-                <ArrowUpRight className="h-3 w-3" /> +18% vs last week
-              </div>
+              {weekDelta === null ? (
+                <div className="text-xs font-medium text-muted-foreground">
+                  first week of data
+                </div>
+              ) : (
+                <div
+                  className={cn(
+                    "flex items-center justify-end gap-1 text-xs font-medium",
+                    weekDelta >= 0 ? "text-emerald-600" : "text-red-600"
+                  )}
+                >
+                  {weekDelta >= 0 ? (
+                    <ArrowUpRight className="h-3 w-3" />
+                  ) : (
+                    <ArrowDownRight className="h-3 w-3" />
+                  )}
+                  {weekDelta >= 0 ? "+" : ""}
+                  {weekDelta}% vs last week
+                </div>
+              )}
             </div>
           </CardHeader>
           <CardContent>
-            <WeeklyBars data={WEEKLY_VIEWS} />
+            <WeeklyBars data={week} />
           </CardContent>
         </Card>
 

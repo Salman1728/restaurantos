@@ -1,4 +1,11 @@
-import type { MenuCategory, MenuItem, Promo, Restaurant } from "@/lib/types";
+import { FieldValue } from "firebase-admin/firestore";
+import type {
+  MenuCategory,
+  MenuItem,
+  MenuViewStat,
+  Promo,
+  Restaurant,
+} from "@/lib/types";
 import { getDb } from "@/lib/firebase";
 import { mockCategories, mockItems, mockRestaurants } from "./mock";
 
@@ -93,6 +100,50 @@ export async function getPromos(restaurantId: string): Promise<Promo[]> {
     return snap.docs.map((d) => fromDoc<Promo>(d)).sort(bySortOrder);
   } catch (err) {
     console.error("Firestore getPromos failed:", err);
+    return [];
+  }
+}
+
+// ---------- Analytics ----------
+
+/** YYYY-MM-DD in Africa/Nairobi (UTC+3, no DST). */
+function nairobiDate(daysAgo = 0) {
+  return new Date(Date.now() + 3 * 3600_000 - daysAgo * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+}
+
+/** Counts one public-API menu fetch. Never throws — analytics must not break the API. */
+export async function trackMenuView(restaurantId: string): Promise<void> {
+  const db = getDb();
+  if (!db) return;
+  const date = nairobiDate();
+  try {
+    await db
+      .collection("menuViews")
+      .doc(`${restaurantId}_${date}`)
+      .set(
+        { restaurantId, date, count: FieldValue.increment(1) },
+        { merge: true }
+      );
+  } catch (err) {
+    console.error("Firestore trackMenuView failed:", err);
+  }
+}
+
+/** View counts for every restaurant over the last `days` days. */
+export async function getAllMenuViews(days = 14): Promise<MenuViewStat[]> {
+  const db = getDb();
+  if (!db) return [];
+  try {
+    const cutoff = nairobiDate(days - 1);
+    const snap = await db
+      .collection("menuViews")
+      .where("date", ">=", cutoff)
+      .get();
+    return snap.docs.map((d) => d.data() as MenuViewStat);
+  } catch (err) {
+    console.error("Firestore getAllMenuViews failed:", err);
     return [];
   }
 }
